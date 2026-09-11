@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "description": "Save, list and switch between named sets of local Claude Code credentials (unofficial)",
+    "homepage": "https://github.com/Zigecek/ccred",
+    "license": "MIT|Apache-2.0",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/Zigecek/ccred/releases/download/v0.2.0/ccred-x86_64-pc-windows-msvc.zip",
+            "hash": "546c1d196776a4e992204263efeb98ef51fe2effdd306f25cb195287d7b6bad5"
+        }
+    },
+    "bin": "ccred.exe",
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/Zigecek/ccred/releases/download/v$version/ccred-x86_64-pc-windows-msvc.zip"
+            }
+        },
+        "hash": {
+            "url": "$url.sha256"
+        }
+    },
+    "notes": [
+        "Set up automatic refresh:  ccred schedule install",
+        "Check it:                  ccred schedule status"
+    ],
+    "pre_uninstall": [
+        "# A scheduled task whose binary is gone is a permanent, silently failing zombie.",
+        "if (Get-Command ccred -ErrorAction SilentlyContinue) { ccred schedule uninstall 2>$null }"
+    ]
+}
