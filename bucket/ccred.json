@@ -1,12 +1,12 @@
 {
-    "version": "0.2.15",
+    "version": "0.2.16",
     "description": "Save, list and switch between named sets of local Claude Code credentials (unofficial)",
     "homepage": "https://github.com/Zigecek/ccred",
     "license": "MIT|Apache-2.0",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/Zigecek/ccred/releases/download/v0.2.15/ccred-x86_64-pc-windows-msvc.zip",
-            "hash": "c281b42b8f1f905822d4b13e9bb160b1df5b4501ff525f7253676d5564399fe7"
+            "url": "https://github.com/Zigecek/ccred/releases/download/v0.2.16/ccred-x86_64-pc-windows-msvc.zip",
+            "hash": "6cb4edc368a63b94e4ad0d6b94cdf28c1fcc42772b603acaefeacbac4c84d90b"
         }
     },
     "bin": "ccred.exe",
