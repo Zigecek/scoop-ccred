@@ -22,8 +22,16 @@ ccred schedule status
 Uninstalling removes that scheduled task first. A task whose binary is gone is
 a permanent, silently failing zombie, so `pre_uninstall` clears it.
 
-The manifest tracks releases automatically through `checkver` and
-`autoupdate`; the hash comes from the `.sha256` published beside each archive.
+A workflow in this repository moves the manifest to each new ccred release
+within a few hours, after checking the archive against the `.sha256` published
+beside it. `scoop update ccred` picks it up from there.
+
+To remove ccred entirely, stored profiles included:
+
+```powershell
+ccred uninstall --purge   # asks before deleting stored credentials
+scoop uninstall ccred
+```
 
 **Unofficial and independent.** Not affiliated with, endorsed by, or sponsored
 by Anthropic PBC.

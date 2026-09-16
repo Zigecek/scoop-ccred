@@ -1,0 +1,78 @@
+name: update
+
+# Point the manifest at the latest ccred release.
+#
+# `checkver` and `autoupdate` in the manifest only describe HOW to update;
+# something has to run them. Official buckets use Excavator for that. Without
+# anything, this bucket sat on 0.2.0 through fourteen releases, some of which
+# fixed ways to lose credentials.
+#
+# This runs here rather than as a step in ccred's release pipeline because a
+# workflow may push to its own repository with GITHUB_TOKEN, while pushing
+# here from ccred would need a long-lived personal token.
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Point the manifest at the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE: Zigecek/ccred
+          ASSET: ccred-x86_64-pc-windows-msvc.zip
+        run: |
+          set -euo pipefail
+
+          # `latest` never names a prerelease or a draft.
+          tag=$(gh release view --repo "$SOURCE" --json tagName -q .tagName)
+          version=${tag#v}
+          current=$(jq -r .version bucket/ccred.json)
+          if [ "$version" = "$current" ]; then
+            echo "already at $version"
+            exit 0
+          fi
+
+          mkdir -p "$RUNNER_TEMP/dl"
+          gh release download "$tag" --repo "$SOURCE" --dir "$RUNNER_TEMP/dl" \
+            --pattern "$ASSET" --pattern "$ASSET.sha256"
+
+          # Check the archive against the published checksum rather than
+          # copying the checksum blind: a manifest whose hash does not match
+          # fails every install with an error that blames the user.
+          want=$(cut -d' ' -f1 "$RUNNER_TEMP/dl/$ASSET.sha256" | tr 'A-F' 'a-f')
+          have=$(sha256sum "$RUNNER_TEMP/dl/$ASSET" | cut -d' ' -f1)
+          if [ "$want" != "$have" ]; then
+            echo "::error::$ASSET does not match its published checksum"
+            exit 1
+          fi
+          unzip -l "$RUNNER_TEMP/dl/$ASSET" | grep -q ' ccred\.exe$' || {
+            echo "::error::$ASSET has no ccred.exe at its root"
+            exit 1
+          }
+
+          url="https://github.com/$SOURCE/releases/download/$tag/$ASSET"
+          jq --indent 4 --arg v "$version" --arg u "$url" --arg h "$have" \
+            '.version = $v
+             | .architecture."64bit".url = $u
+             | .architecture."64bit".hash = $h' \
+            bucket/ccred.json > "$RUNNER_TEMP/ccred.json"
+          mv "$RUNNER_TEMP/ccred.json" bucket/ccred.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bucket/ccred.json
+          git commit -m "ccred: update to $version"
+          git push
